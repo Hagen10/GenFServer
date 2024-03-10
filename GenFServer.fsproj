@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="GenServer.fs" />
     <Compile Include="Listener.fs" />
+    <Compile Include="StateHandler.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

@@ -1,86 +1,24 @@
 ﻿open GenServer
-open System.Threading
-open System
+open Listener
+open StateHandler
 
-let state = State(Map ["a", 0; "b", 0; "c", 0])
-let state2 = State(Map ["a", 0; "b", 0; "c", 0])
+// Listener will not be called directly but instead passed to the updater GenServer which will call one of its functions every time its state has been updated
+let listener = new Listener(State("listener", 0))
+let updater = new StateHandler(State(Map ["a", 0; "b", 0; "c", 0]), listener)
 
-let server = GenServer.start state
-let server2 = GenServer.start state2
+updater.PrintState()
 
+updater.UpdateState "a" 5
 
-let handleIncrement (delay : int) state  =
-    match state with
-    | State state' -> 
-        match Map.tryFind "b" state' with
-        | Some oldValue ->
-            // Update value only if the key "b" exists
-            Thread.Sleep(delay)
+let value = updater.GetValue "a"
 
-            let newValue = oldValue + 10
-            let res = state' |> Map.add "b" newValue
-            State(res)
-        | None ->
-            State(state')
+printfn "should be an Int: %A" value
 
-let handlePrintState state =
-    match state with
-    | State state' -> state' |> Map.iter (fun key value -> Console.WriteLine(sprintf "Key: %s, Value: %i" key value))
+let value2 = updater.GetValue "d"
 
-let handleCall key state =
-    match state with
-    | State state' -> 
-        match Map.tryFind key state' with
-        | Some oldValue ->
-            state, Int(oldValue)
+printfn "Should be None: %A" value2
 
-        | None ->
-            state, Int 0
+updater.UpdateState "c" 17
 
-
-GenServer.info server handlePrintState
-
-GenServer.info server2 handlePrintState
-
-GenServer.cast server (handleIncrement 0)
-
-GenServer.cast server2 (handleIncrement 5000)
-
-printfn "%A" (GenServer.call server (handleCall "a"))
-
-printfn "%A" (GenServer.call server2 (handleCall "b"))
-
-
-
-let listener = Listener.startListener()
-
-let stateUpdater = GenServer.start (State(listener, 100))
-
-let updateState state = 
-    match state with
-    | State(listener, value) -> 
-        let updatedValue = value - 1
-        Listener.messageUpdated listener
-        State(listener, updatedValue)
-
-
-let getState state =
-    match state with
-    | State(listener, value) -> state, Int(value)
-
-// let updater = GenServer.start
-
-GenServer.cast stateUpdater updateState
-
-printfn "state status %A" (GenServer.call stateUpdater getState)
-
-GenServer.cast stateUpdater updateState
-
-printfn "state status %A" (GenServer.call stateUpdater getState)
-
-GenServer.cast stateUpdater updateState
-
-GenServer.cast stateUpdater updateState
-
-printfn "state status %A" (GenServer.call stateUpdater getState)
+updater.PrintState()
 
