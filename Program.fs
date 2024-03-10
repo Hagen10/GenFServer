@@ -3,12 +3,9 @@ open System.Threading
 open System
 
 let state = State(Map ["a", 0; "b", 0; "c", 0])
-
 let state2 = State(Map ["a", 0; "b", 0; "c", 0])
 
-
 let server = GenServer.start state
-
 let server2 = GenServer.start state2
 
 
@@ -52,4 +49,38 @@ GenServer.cast server2 (handleIncrement 5000)
 printfn "%A" (GenServer.call server (handleCall "a"))
 
 printfn "%A" (GenServer.call server2 (handleCall "b"))
+
+
+
+let listener = Listener.startListener()
+
+let stateUpdater = GenServer.start (State(listener, 100))
+
+let updateState state = 
+    match state with
+    | State(listener, value) -> 
+        let updatedValue = value - 1
+        Listener.messageUpdated listener
+        State(listener, updatedValue)
+
+
+let getState state =
+    match state with
+    | State(listener, value) -> state, Int(value)
+
+// let updater = GenServer.start
+
+GenServer.cast stateUpdater updateState
+
+printfn "state status %A" (GenServer.call stateUpdater getState)
+
+GenServer.cast stateUpdater updateState
+
+printfn "state status %A" (GenServer.call stateUpdater getState)
+
+GenServer.cast stateUpdater updateState
+
+GenServer.cast stateUpdater updateState
+
+printfn "state status %A" (GenServer.call stateUpdater getState)
 
