@@ -1,17 +1,18 @@
 module GenServer
 
-    type State = {
-        mutable counter: int
-    }
+    type State<'T> = State of 'T
 
-    type Message =
-        | Cast of (State -> State)
-        | Info of (State -> unit)
-        | Call of (AsyncReplyChannel<obj> * (State -> State * int))
+    type Reply<'T> =
+        | Reply of 'T
 
-    type Server = MailboxProcessor<Message>
+    type Message<'T> =
+        | Cast of (State<'T> -> State<'T>)
+        | Info of (State<'T> -> unit)
+        | Call of (AsyncReplyChannel<obj> * (State<'T> -> State<'T> * Reply<'T>))
 
-    let rec agentLoop (state: State) (inbox: Server) =
+    type Server<'T> = MailboxProcessor<Message<'T>>
+
+    let rec agentLoop (state: State<'T>) (inbox: Server<'T>) =
         async {
             let! msg = inbox.Receive()
             match msg with
@@ -28,15 +29,13 @@ module GenServer
         }
 
     let start initialState =
-        let state = { counter = initialState }
-        MailboxProcessor.Start(fun inbox -> agentLoop state inbox)
+        MailboxProcessor.Start(fun inbox -> agentLoop initialState inbox)
 
-    let cast (server : Server) handler =
+    let cast (server : Server<'T>) handler =
         server.Post(Cast handler)
 
-    let info (server : Server) handler =
+    let info (server : Server<'T>) handler =
         server.Post(Info handler)
 
-    let call<'T> (server : Server) (cont: State -> State * int) =
-
-        server.PostAndReply(fun replyChannel -> Call(replyChannel, cont))
+    let call<'T> (server : Server<'T>) (cont: State<'T> -> State<'T> * Reply<'T>) =
+        server.PostAndReply(fun (replyChannel) -> Call(replyChannel, cont))
