@@ -35,12 +35,10 @@ let handleCall key state =
     | State state' -> 
         match Map.tryFind key state' with
         | Some oldValue ->
-
-                   // boxing comes with a performance overhead. Not the best :/
-            state, box oldValue
+            state, Int(oldValue)
 
         | None ->
-            state, box 0
+            state, Int 0
 
 
 GenServer.info server handlePrintState
@@ -50,7 +48,6 @@ GenServer.info server2 handlePrintState
 GenServer.cast server (handleIncrement 0)
 
 GenServer.cast server2 (handleIncrement 5000)
-
 
 printfn "%A" (GenServer.call server (handleCall "a"))
 

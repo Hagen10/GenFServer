@@ -2,10 +2,13 @@ module GenServer
 
     type State<'T> = State of 'T
 
+    type Reply = 
+        | Int of int
+
     type Message<'T> =
         | Cast of (State<'T> -> State<'T>)
         | Info of (State<'T> -> unit)
-        | Call of (AsyncReplyChannel<obj> * (State<'T> -> State<'T> * obj))
+        | Call of (AsyncReplyChannel<Reply> * (State<'T> -> State<'T> * Reply))
 
     type Server<'T> = MailboxProcessor<Message<'T>>
 
@@ -34,5 +37,5 @@ module GenServer
     let info (server : Server<'T>) handler =
         server.Post(Info handler)
 
-    let call<'T> (server : Server<'T>) (cont: State<'T> -> State<'T> * obj) =
-        server.PostAndReply(fun (replyChannel) -> Call(replyChannel, cont))
+    let call<'T> (server : Server<'T>) (cont: State<'T> -> State<'T> * Reply) =
+        server.PostAndReply(fun ((replyChannel : AsyncReplyChannel<Reply>)) -> Call(replyChannel, cont))
