@@ -6,8 +6,6 @@ module StateHandler
      type StateHandler(state, listener : Listener) =
         inherit GenServerI<Map<string, int>>(state)
 
-        let listener = listener
-
         member this.UpdateState key value =
             let handler a b state =
                 match state with
@@ -17,6 +15,7 @@ module StateHandler
                         let res = state' |> Map.add a b
                         State(res)
                     | _ -> state
+
             listener.StateUpdated()
             this.Cast (handler key value)
 
@@ -33,5 +32,5 @@ module StateHandler
 
         member this.PrintState() =
             match this.GetState() with
-            | State state' 
-                -> state' |> Map.iter  (fun key value -> printfn "Key: %s, Value: %i" key value)
+            | State state' -> 
+                state' |> Map.iter  (fun key value -> printfn "Key: %s, Value: %i" key value)
