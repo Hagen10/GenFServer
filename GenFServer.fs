@@ -1,8 +1,11 @@
 module GenFServer
 
+open System.Threading
+
 type CommunicationType =
     | Cast of obj
     | Call of AsyncReplyChannel<obj> * obj
+    | AsyncCall of AsyncReplyChannel<obj> * obj
     | Info of obj
 
 type Server = MailboxProcessor<CommunicationType>
@@ -24,6 +27,10 @@ type GenFServer<'T>(state) as this =
                 let reply, newState = this.handleCall request state'
                 replyChannel.Reply(reply)
                 return! agentLoop newState inbox'
+            | AsyncCall(replyChannel, request) ->
+                let reply, newState = this.handleCall request state'
+                replyChannel.Reply(reply)
+                return! agentLoop newState inbox'
         }
 
     let server = MailboxProcessor.Start(fun inbox -> agentLoop state inbox)
@@ -36,5 +43,8 @@ type GenFServer<'T>(state) as this =
 
     member this.Call request =
         server.PostAndReply(fun ((replyChannel: AsyncReplyChannel<obj>)) -> Call(replyChannel, request))
+
+    member this.AsyncCall request =
+        server.PostAndAsyncReply(fun ((replyChannel: AsyncReplyChannel<obj>)) -> AsyncCall(replyChannel, request))
 
     member this.Info request = server.Post(Info request)

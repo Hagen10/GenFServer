@@ -30,3 +30,14 @@ Thread.Sleep(100)
 server.Cast DecrCount
 Thread.Sleep(100)
 printfn "RES: %A" (server.Call GetCount)
+
+// ASYNC TESTING
+let res = server.AsyncCall GetCount
+
+server.Cast IncrCount
+server.Cast IncrCount
+server.Cast IncrCount
+server.Cast IncrCount
+server.Cast IncrCount
+
+Async.RunSynchronously res |> printfn "ASYNC RESULT: %A"
