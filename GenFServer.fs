@@ -32,61 +32,6 @@ type GenFServer<'T>(state) as this =
     abstract member handleCall: obj -> 'T -> obj * 'T
     abstract member handleInfo: obj -> 'T -> 'T
 
-    // member private server = MailboxProcessor.Start(fun inbox ->
-    //     let rec agentLoop' (state' : 'T) (inbox' : Server) =
-    //         async {
-    //             let! msg = inbox'.Receive()
-    //             match msg with
-    //             | Cast request ->
-    //                 let newState = this.handleCast request state'
-
-    //                 printfn "NEW STATE %A" newState
-    //                 return! agentLoop' newState inbox'
-    //             | Info request ->
-    //                 let newState = this.handleInfo request state'
-    //                 return! agentLoop' newState inbox'
-    //             | Call(replyChannel, request)  ->
-    //                 let reply, newState = this.handleCall request state'
-
-    //                 printfn "reply: %A CALL STATE %A" reply newState
-
-    //                 replyChannel.Reply(reply)
-    //                 return! agentLoop' newState inbox'
-    //         }
-    //     agentLoop' state inbox
-    // )
-
-
-    // member this.agentLoop (state: 'T) (inbox: Server) =
-    //     printfn "Starting agentloop"
-    //     let rec agentLoop' (state' : 'T) (inbox' : Server) =
-    //         async {
-    //             let! msg = inbox'.Receive()
-    //             match msg with
-    //             | Cast request ->
-    //                 let newState = this.handleCast request state'
-
-    //                 printfn "NEW STATE %A" newState
-    //                 return! agentLoop' newState inbox'
-    //             | Info request ->
-    //                 let newState = this.handleInfo request state'
-    //                 return! agentLoop' newState inbox'
-    //             | Call(replyChannel, request)  ->
-    //                 let reply, newState = this.handleCall request state'
-
-    //                 printfn "reply: %A CALL STATE %A" reply newState
-
-    //                 replyChannel.Reply(reply)
-    //                 return! agentLoop' newState inbox'
-    //         }
-    //     agentLoop' state inbox
-
-
-    // member createServer () =
-    //     MailboxProcessor.Start(fun inbox -> this.agentLoop state inbox)
-
-    // member val server = lazy (createServer ())
-
     member this.Cast request = server.Post(Cast request)
 
     member this.Call request =
