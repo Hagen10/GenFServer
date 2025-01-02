@@ -14,23 +14,28 @@ type Server = MailboxProcessor<CommunicationType>
 type GenFServer<'T>(state) as this =
     let rec agentLoop (state': 'T) (inbox': Server) =
         async {
-            let! msg = inbox'.Receive()
+            try
+                let! msg = inbox'.Receive()
 
-            match msg with
-            | Cast request ->
-                let newState = this.handleCast request state'
-                return! agentLoop newState inbox'
-            | Info request ->
-                let newState = this.handleInfo request state'
-                return! agentLoop newState inbox'
-            | Call(replyChannel, request) ->
-                let reply, newState = this.handleCall request state'
-                replyChannel.Reply(reply)
-                return! agentLoop newState inbox'
-            | AsyncCall(replyChannel, request) ->
-                let reply, newState = this.handleCall request state'
-                replyChannel.Reply(reply)
-                return! agentLoop newState inbox'
+                match msg with
+                | Cast request ->
+                    let newState = this.handleCast request state'
+                    return! agentLoop newState inbox'
+                | Info request ->
+                    let newState = this.handleInfo request state'
+                    return! agentLoop newState inbox'
+                | Call(replyChannel, request) ->
+                    let reply, newState = this.handleCall request state'
+                    replyChannel.Reply(reply)
+                    return! agentLoop newState inbox'
+                | AsyncCall(replyChannel, request) ->
+                    let reply, newState = this.handleCall request state'
+                    replyChannel.Reply(reply)
+                    return! agentLoop newState inbox'
+            with ex -> 
+                printfn "ENCOUNTERED AN EXCEPTION %s STATE WAS %A" ex.Message state'
+                // raise ex
+                return! agentLoop state' inbox'
         }
 
     let server = MailboxProcessor.Start(fun inbox -> agentLoop state inbox)
